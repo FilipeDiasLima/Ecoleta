@@ -20,7 +20,7 @@ class PointController {
     const trx = await knex.transaction();
 
     const point = {
-      image: 'https://uploads.metropoles.com/wp-content/uploads/2019/12/16144441/040117-FM-Supermercado-023.jpg',
+      image: request.file.filename,
       name,
       email,
       whatsapp,
@@ -34,7 +34,10 @@ class PointController {
 
     const point_id = ids[0];
 
-    const pointItems = items.map((item_id: number) => {
+    const pointItems = items
+      .split(',')
+      .map((item: string) => Number(item.trim()))
+      .map((item_id: number) => {
       return {
         item_id,
         point_id,
@@ -73,7 +76,12 @@ class PointController {
       .where('point_items.point_id', id)
       .select('title');
 
-    return response.json({point, items});
+    const serializedPoint = {
+        ...point,
+        image_url: `http://192.168.0.28:3333/uploads/${point.image}`,
+    }
+
+    return response.json({point: serializedPoint, items});
   }
 
   async index(request: Request, response: Response) {
@@ -90,8 +98,15 @@ class PointController {
       .where('uf', String(uf))
       .distinct()
       .select('points.*');
+    
+    const serializedPoint = points.map(point => {
+        return { 
+          ...point,
+          image_url: `http://192.168.0.28:3333/uploads/${point.image}`,
+         };
+      });
 
-    return response.json(points);
+    return response.json(serializedPoint);
 
   }
 }
